@@ -28,6 +28,12 @@ void pop(FILE *fptr, const char *reg, size_t offset){
     stack_size--;
 }
 
+void pop(FILE *fptr, const char *reg, size_t offset){
+    fprintf(fptr, "    lea rsp, [rsp + %i]\n", 8*offset);
+    fprintf(fptr, "    pop %s\n", reg);
+    stack_size--;
+}
+
 void generate(dynlist_stmt *prog)
 {
     // Generate and open the file
