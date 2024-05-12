@@ -10,11 +10,12 @@
 void tokenize(dynlist_token *tokens, dynlist_char *code){
     // Initialize a buffer to parse for keywords
     dynlist_char buffer;
-    dynlist_init(buffer, char);
 
     // Initializing the char
     char c;
     for(int i = 0; i < (int)code->size; i++){
+        dynlist_free(buffer);
+        dynlist_init(buffer, char);
         // Set c equal to the current character
         c = code->data[i];
         
@@ -47,22 +48,18 @@ void tokenize(dynlist_token *tokens, dynlist_char *code){
             if(strcmp(buffer.data, "exit") == 0){
                 Token token = { .type = TokenType_exit_, .val = "" };
                 dynlist_push_ptr(tokens, token);
-                dynlist_free(buffer);
             }
             else if(strcmp(buffer.data, "int") == 0){
                 Token token = {.type = TokenType_int, .val = ""};
                 dynlist_push_ptr(tokens, token);
-                dynlist_free(buffer);
             }
             else{
                 // It's an identifier
                 Token token = {.type = TokenType_ident };
                 token.val = (char *)malloc(buffer.size);
-                snprintf(token.val, buffer.size, "%s", buffer.data);
+                strncpy(token.val, buffer.data, buffer.size);
                 dynlist_push_ptr(tokens, token);
                 free(token.val);
-                // Reset the buffer
-                dynlist_free(buffer);
             }
         }
         else if(isdigit(c)){
@@ -87,14 +84,11 @@ void tokenize(dynlist_token *tokens, dynlist_char *code){
             i--;
 
             // store the digit as a value in a token
-            Token token = { .type = TokenType_int_lit };
+            Token token = {.type = TokenType_int_lit};
             token.val = (char *)malloc(buffer.size);
-            snprintf(token.val, buffer.size, "%s", buffer.data);
+            strncpy(token.val, buffer.data, buffer.size);
             dynlist_push_ptr(tokens, token);
             free(token.val);
-
-            // Reset the buffer
-            dynlist_free(buffer);
         }
         else if(c == '('){
             // Add an open paren token
@@ -123,6 +117,15 @@ void tokenize(dynlist_token *tokens, dynlist_char *code){
             fprintf(stderr, "Character '%c' is an invalid token\n", c);
             exit(EXIT_FAILURE);
         }
-
     }
+    for(size_t i = 0; i < tokens->size; i++){
+        if(tokens->data[i].type == TokenType_ident){
+            printf("%s\n", tokens->data[i].val);
+        }
+        if(tokens->data[i].type == TokenType_int_lit){
+            printf("%s\n", tokens->data[i].val);
+        }
+    }
+
+    dynlist_free(buffer);
 }

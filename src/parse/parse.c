@@ -28,7 +28,6 @@ node_term *parse_term(dynlist_token *tokens, u32 *index){
 
     if(tokens->data[curr_index].type == TokenType_int_lit){
         Token int_lit = tokens->data[curr_index];
-        printf("%s\n", int_lit.val);
         curr_index++;
         node_term *term_int_lit = NULL;
         HEAP_ALLOC(heap, node_term, term_int_lit);
@@ -186,7 +185,6 @@ node_stmt *parse_stmt(dynlist_token *tokens, u32 *index){
         HEAP_ALLOC(heap, node_stmt, stmt_var);
         stmt_var->type = StmtType_var;
         node_expr *expr = parse_expr(tokens, index, 0);
-        printf("%i\n", expr->term->ident.type);
         if(expr == NULL){
             fprintf(stderr, "Unable to parse expression\n");
             exit(EXIT_FAILURE);
