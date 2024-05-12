@@ -1,2 +1,4 @@
 int x = 213;
+int y = 23;
+int z = 1 + 2;
 exit(x);

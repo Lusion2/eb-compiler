@@ -38,8 +38,11 @@ void generate(dynlist_stmt *prog)
 
     for(u32 i = 0; i < prog->size; i++){
         node_stmt *n = prog->data[i];
+        printf("Statement #%i\n", i);
         if(n->type == StmtType_exit){
+            printf("\texit statement\n");
             if(n->expr->type == ExprType_Add){
+                printf("adding in an exit statement\n");
                 fprintf(fptr, "    mov rax, %s\n", n->expr->binary.left->term->int_lit.val);
                 fprintf(fptr, "    mov rdi, %s\n", n->expr->binary.right->term->int_lit.val);
                 fprintf(fptr, "    add rax, rdi\n");
@@ -61,9 +64,19 @@ void generate(dynlist_stmt *prog)
             }
         }
         else if(n->type == StmtType_var){
-            printf("%s\n", n->expr->term->int_lit.val);
-            fprintf(fptr, "    mov rax, %s\n", n->expr->term->int_lit.val);
-            push(fptr, "rax");
+            printf("\tvariable statement\n");
+            if(n->expr->type == ExprType_Add){
+                printf("adding in a variable statement\n");
+                // fprintf(fptr, "    ; %s\n", n->expr->);
+                fprintf(fptr, "    mov rax, %s\n", n->expr->binary.left->term->int_lit.val);
+                fprintf(fptr, "    mov rdi, %s\n", n->expr->binary.right->term->int_lit.val);
+                fprintf(fptr, "    add rax, rdi\n");
+                push(fptr, "rax");
+            }
+            else{
+                fprintf(fptr, "    mov rax, %s\n", n->expr->term->int_lit.val);
+                push(fptr, "rax");
+            }
         }
     }
 

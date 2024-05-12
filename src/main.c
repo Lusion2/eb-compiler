@@ -50,6 +50,13 @@ int main(int argc, char **argv)
     prog = parse_prog(&tokens);
 
     // Free the tokens after parsing
+    for(size_t i = 0; i < tokens.size; i++){
+        if (tokens.data[i].type == TokenType_int_lit ||
+            tokens.data[i].type == TokenType_ident)
+        {
+            free(tokens.data[i].val);
+        }
+    }
     dynlist_free(tokens);
     
     generate(&prog);

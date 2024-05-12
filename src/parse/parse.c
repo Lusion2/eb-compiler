@@ -33,6 +33,7 @@ node_term *parse_term(dynlist_token *tokens, u32 *index){
         HEAP_ALLOC(heap, node_term, term_int_lit);
         term_int_lit->type = TermType_int_lit;
         term_int_lit->int_lit = int_lit;
+        // printf("integer literal: %s\n", term_int_lit->int_lit.val);
         *index = curr_index;
         return term_int_lit;
     }
@@ -86,6 +87,7 @@ node_expr *parse_expr(dynlist_token *tokens, u32 *index, int min_prec){
     HEAP_ALLOC(heap, node_expr, expr_left);
     expr_left->term = term_left;
     expr_left->type = ExprType_Term;
+    printf("Term left val: %s\n", expr_left->term->int_lit.val);
 
     u32 curr_index = *index;
 
@@ -102,10 +104,14 @@ node_expr *parse_expr(dynlist_token *tokens, u32 *index, int min_prec){
             break;
         }
         Token op = tokens->data[curr_index];
+        if(op.type == TokenType_plus){
+            printf("operator is addition\n");
+        }
         curr_index++;
         *index = curr_index;
         int next_min_prec = prec + 1;
         node_expr *expr_right = parse_expr(tokens, index, next_min_prec);
+        // printf("Term right val: %s\n", expr_right->term->int_lit.val);
         if(expr_right == NULL){
             fprintf(stderr, "Unable to parse expression\n");
             exit(EXIT_FAILURE);
@@ -115,6 +121,7 @@ node_expr *parse_expr(dynlist_token *tokens, u32 *index, int min_prec){
         HEAP_ALLOC(heap, node_expr, expr);
         if(op.type == TokenType_plus){
             expr->type = ExprType_Add;
+            printf("Left: %s, Right %s\n", expr_left->term->int_lit.val, expr_right->term->int_lit.val);
             expr->binary.left = expr_left;
             expr->binary.right = expr_right;
         }
