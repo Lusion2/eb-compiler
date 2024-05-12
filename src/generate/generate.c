@@ -13,6 +13,7 @@ size_t stack_size = 0;
 
 typedef struct{
     size_t stack_loc;
+    const char *ident;
 } stack_var;
 
 
@@ -21,14 +22,14 @@ void push(FILE *fptr, const char *reg){
     stack_size++;
 }
 
-void pop(FILE *fptr, const char *reg){
+void pop(FILE *fptr, const char *reg, size_t offset){
+    fprintf(fptr, "    lea rsp, [rsp + %i]\n", 8*offset);
     fprintf(fptr, "    pop %s\n", reg);
     stack_size--;
 }
 
 void generate(dynlist_stmt *prog)
 {
-    // assert(false && "Code generation not implemented\n");
     // Generate and open the file
     FILE *fptr;
     fptr = fopen("./build/out.S", "w");
@@ -42,13 +43,12 @@ void generate(dynlist_stmt *prog)
         if(n->type == StmtType_exit){
             printf("\texit statement\n");
             if(n->expr->type == ExprType_Add){
-                printf("adding in an exit statement\n");
                 fprintf(fptr, "    mov rax, %s\n", n->expr->binary.left->term->int_lit.val);
                 fprintf(fptr, "    mov rdi, %s\n", n->expr->binary.right->term->int_lit.val);
                 fprintf(fptr, "    add rax, rdi\n");
                 push(fptr, "rax");
                 fprintf(fptr, "    mov rax, 60\n");
-                pop(fptr, "rdi");
+                pop(fptr, "rdi", 0);
                 fprintf(fptr, "    syscall\n");
             }
             else if(n->expr->type == ExprType_Term){
@@ -58,7 +58,7 @@ void generate(dynlist_stmt *prog)
                 }
                 else if(n->expr->term->type == TermType_ident){
                     fprintf(fptr, "    mov rax, 60\n");
-                    pop(fptr, "rdi");
+                    pop(fptr, "rdi", 2);
                     fprintf(fptr, "    syscall\n");
                 }
             }
@@ -66,14 +66,14 @@ void generate(dynlist_stmt *prog)
         else if(n->type == StmtType_var){
             printf("\tvariable statement\n");
             if(n->expr->type == ExprType_Add){
-                printf("adding in a variable statement\n");
-                // fprintf(fptr, "    ; %s\n", n->expr->);
+                fprintf(fptr, "    ; %s\n", n->expr->term->ident.val);
                 fprintf(fptr, "    mov rax, %s\n", n->expr->binary.left->term->int_lit.val);
                 fprintf(fptr, "    mov rdi, %s\n", n->expr->binary.right->term->int_lit.val);
                 fprintf(fptr, "    add rax, rdi\n");
                 push(fptr, "rax");
             }
             else{
+                fprintf(fptr, "    ; %s\n", n->expr->term->ident.val);
                 fprintf(fptr, "    mov rax, %s\n", n->expr->term->int_lit.val);
                 push(fptr, "rax");
             }

@@ -58,8 +58,9 @@ void tokenize(dynlist_token *tokens, dynlist_char *code){
                 Token token = {.type = TokenType_ident };
                 token.val = (char *)malloc(buffer.size);
                 strncpy(token.val, buffer.data, buffer.size);
+                // printf("identifier: %s\n", token.val);
                 dynlist_push_ptr(tokens, token);
-                free(token.val);
+
             }
         }
         else if(isdigit(c)){
@@ -119,10 +120,10 @@ void tokenize(dynlist_token *tokens, dynlist_char *code){
     }
     for(size_t i = 0; i < tokens->size; i++){
         if(tokens->data[i].type == TokenType_ident){
-            //printf("%s\n", tokens->data[i].val);
+            // printf("%s\n", tokens->data[i].val);
         }
         if(tokens->data[i].type == TokenType_int_lit){
-            //printf("%s\n", tokens->data[i].val);
+            // printf("%s\n", tokens->data[i].val);
         }
     }
 

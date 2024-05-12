@@ -55,6 +55,7 @@ int main(int argc, char **argv)
             tokens.data[i].type == TokenType_ident)
         {
             free(tokens.data[i].val);
+            // free(tokens.data[i].ident);
         }
     }
     dynlist_free(tokens);
