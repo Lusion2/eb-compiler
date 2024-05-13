@@ -12,7 +12,7 @@ _start:
     add rax, rdi
     push rax
     mov rax, 60
-    lea rsp, [rsp + 16]
+    lea rsp, [rsp + 8]
     pop rdi
     syscall
     mov rax, 60
