@@ -49,7 +49,9 @@ int main(int argc, char **argv)
     dynlist_stmt prog = {0};
     prog = parse_prog(&tokens);
 
-    // Free the tokens after parsing
+    generate(&prog);
+    
+    // Free the tokens after code gen
     for(size_t i = 0; i < tokens.size; i++){
         if (tokens.data[i].type == TokenType_int_lit ||
             tokens.data[i].type == TokenType_ident)
@@ -59,8 +61,6 @@ int main(int argc, char **argv)
         }
     }
     dynlist_free(tokens);
-    
-    generate(&prog);
 
     // Free nodes after generating
     dynlist_free(prog);

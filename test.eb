@@ -1,4 +1,3 @@
-int x = 213;
-int y = 23;
-int z = 1 + 2;
-exit(x);
+int x = 5;
+int y = 2;
+exit(x+y);

@@ -12,7 +12,7 @@
 
 typedef struct{
     size_t stack_loc;
-    char *ident;
+    const char *ident;
 } stack_var;
 
 typedef dynlist(stack_var) dynlist_stack_var;
@@ -30,10 +30,46 @@ void pop(FILE *fptr, const char *reg){
     stack_size--;
 }
 
-void getVar(FILE *fptr, const char *reg, size_t offset){
-    fprintf(fptr, "    lea rsp, [rsp + %li]\n", 8*offset);
-    fprintf(fptr, "    pop %s\n", reg);
-    stack_size--;
+void getVar(FILE *fptr, const char *reg, const char *ident){
+    // TODO : VARS IN ASM
+    char *offset = NULL;
+    for(size_t i = 0; i < stack_vars.size; i++){
+        if(strcmp(stack_vars.data[i].ident, ident) == 0){
+            offset = ;
+        }
+    }
+    
+    push(fptr, strcat(reg))
+    pop(fptr, reg);
+    fprintf(fptr, "    sub rsp, %li\n", offset);
+}
+
+void exprAdd(FILE *fptr, node_stmt *n){
+    if(n->expr->binary.left->term->type == TermType_int_lit){
+        fprintf(fptr, "    mov rax, %s\n", n->expr->binary.left->term->int_lit.val);
+    }
+    else if(n->expr->binary.left->term->type == TermType_ident){
+        for(size_t i = 0; i < stack_vars.size; i++){
+            if(strcmp(n->expr->binary.left->term->ident.val, stack_vars.data[i].ident) == 0){
+                getVar(fptr, "rax", stack_vars.data[i].ident);
+                break;
+            }
+        }
+    }
+    
+    if(n->expr->binary.right->term->type == TermType_int_lit){
+        fprintf(fptr, "    mov rdi, %s\n", n->expr->binary.right->term->int_lit.val);
+    }
+    else if(n->expr->binary.right->term->type == TermType_ident){
+        for(size_t i = 0; i < stack_vars.size; i++){
+            if(strcmp(n->expr->binary.right->term->ident.val, stack_vars.data[i].ident) == 0){
+                getVar(fptr, "rdi", stack_vars.data[i].ident);
+                break;
+            }
+        }
+    }
+    fprintf(fptr, "    add rax, rdi\n");
+    push(fptr, "rax");
 }
 
 void generate(dynlist_stmt *prog)
@@ -53,14 +89,9 @@ void generate(dynlist_stmt *prog)
 
     for(u32 i = 0; i < prog->size; i++){
         node_stmt *n = prog->data[i];
-        printf("Statement #%i\n", i+1);
         if(n->type == StmtType_exit){
-            printf("\texit statement\n");
             if(n->expr->type == ExprType_Add){
-                fprintf(fptr, "    mov rax, %s\n", n->expr->binary.left->term->int_lit.val);
-                fprintf(fptr, "    mov rdi, %s\n", n->expr->binary.right->term->int_lit.val);
-                fprintf(fptr, "    add rax, rdi\n");
-                push(fptr, "rax");
+                exprAdd(fptr, n);
                 fprintf(fptr, "    mov rax, 60\n");
                 pop(fptr, "rdi");
                 fprintf(fptr, "    syscall\n");
@@ -72,13 +103,12 @@ void generate(dynlist_stmt *prog)
                 }
                 else if(n->expr->term->type == TermType_ident){
                     fprintf(fptr, "    mov rax, 60\n");
-                    getVar(fptr, "rdi", 1);
+                    getVar(fptr, "rdi", n->expr->term->ident.val);
                     fprintf(fptr, "    syscall\n");
                 }
             }
         }
         else if(n->type == StmtType_var){
-            printf("\tvariable statement\n");
             if(n->expr->type == ExprType_Add){
                 // Creating a new variable
                 
@@ -106,6 +136,7 @@ void generate(dynlist_stmt *prog)
             else{
                 // saving the variable in our stack struct
                 stack_var var = {.stack_loc = stack_size};
+                
                 for(size_t i = 0; i < stack_vars.size; i++){
                     if(strcmp(n->expr->term->ident.val, stack_vars.data[i].ident) == 0){
                         fprintf(stderr, "ERROR Redefinition of variable: %s\n", n->expr->term->ident.val);
@@ -117,10 +148,9 @@ void generate(dynlist_stmt *prog)
                 fprintf(fptr, "    mov rax, %s\n", n->expr->term->int_lit.val);
                 push(fptr, "rax");
 
-                // TODO : dynlist_push(stack_vars, var) NOT WORKING WTF
                 // this is done down here because it wasn't working when it was above
-                // var.ident = n->expr->term->ident.val;
-                // dynlist_push(stack_vars, var);
+                var.ident = n->expr->term->ident.val;
+                dynlist_push(stack_vars, var);
             }
         }
     }
@@ -132,7 +162,7 @@ void generate(dynlist_stmt *prog)
     fclose(fptr);
 
     for(size_t i = 0; i < stack_vars.size; i++){
-        free(stack_vars.data[i].ident);
+        // free(stack_vars.data[i].ident);
     }
     dynlist_free(stack_vars);
 }
