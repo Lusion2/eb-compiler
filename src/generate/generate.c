@@ -32,16 +32,30 @@ void pop(FILE *fptr, const char *reg){
 
 void getVar(FILE *fptr, const char *reg, const char *ident){
     // TODO : VARS IN ASM
-    char *offset = NULL;
+    size_t offset = 0;
     for(size_t i = 0; i < stack_vars.size; i++){
         if(strcmp(stack_vars.data[i].ident, ident) == 0){
-            offset = ;
+            offset = (stack_size - stack_vars.data[i].stack_loc) * 4;
+            break;
         }
     }
+    printf("offset: %li\n", offset);
+
+    char offset_str[64];
+    strcpy(offset_str, "QWORD [rsp + ");
+    char *offset_i = (char*)malloc(sizeof(char)*32);
+    snprintf(offset_i, 32, "%ld", offset);
+    strcat(offset_str, offset_i);
+    strcat(offset_str, "]");
+    printf("offset in str: %s\n", offset_str);
     
-    push(fptr, strcat(reg))
+
+    push(fptr, offset_str);
     pop(fptr, reg);
     fprintf(fptr, "    sub rsp, %li\n", offset);
+
+
+    free(offset_i);
 }
 
 void exprAdd(FILE *fptr, node_stmt *n){
