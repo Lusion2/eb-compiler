@@ -90,23 +90,35 @@ void expr_add(FILE *fptr, node_stmt *n){
     push(fptr, "rax");
 }
 
-void generate_expr(FILE *fptr, node_stmt *n){
-    if (n->expr->type == ExprType_Add){
+void generate_expr(FILE *fptr, node_expr *expr){
+    if (expr->type == ExprType_Add){
         // asm for this
-        fprintf(fptr, "    ; %s\n", n->expr->term->ident.val);
-        if (n->expr->binary.left->type == ExprType_Term){
-            if(n->expr->binary.left->term->type == TermType_ident){
-                get_var(fptr, "rax", n->expr->binary.left->term->ident.val);
+        if (expr->binary.left->type == ExprType_Term){
+            if(expr->binary.left->term->type == TermType_ident){
+                get_var(fptr, "rax", expr->binary.left->term->ident.val);
             } else{
-                fprintf(fptr, "    mov rax, %s\n", n->expr->binary.left->term->int_lit.val);
+                fprintf(fptr, "    mov rax, %s\n", expr->binary.left->term->int_lit.val);
             }
         }
-        if (n->expr->binary.right->type == ExprType_Term){
-            if(n->expr->binary.right->term->type == TermType_ident){
-                get_var(fptr, "rdi", n->expr->binary.right->term->ident.val);
+        if (expr->binary.right->type == ExprType_Term){
+            if(expr->binary.right->term->type == TermType_ident){
+                get_var(fptr, "rdi", expr->binary.right->term->ident.val);
             } else{
-                fprintf(fptr, "    mov rdi, %s\n", n->expr->binary.right->term->int_lit.val);
+                fprintf(fptr, "    mov rdi, %s\n", expr->binary.right->term->int_lit.val);
             }
+        }
+
+        fprintf(fptr, "    add rax, rdi\n");
+        push(fptr, "rax");
+    }
+    else if(expr->type == ExprType_Term){
+        printf("%s\n", expr->term->ident.val);
+        if(expr->term->type == TermType_ident){
+            get_var(fptr, "rax", expr->term->ident.val);
+        }
+        else if(expr->term->type == TermType_int_lit){
+            fprintf(fptr, "    mov rax, %s\n", expr->term->int_lit.val);
+            push(fptr, "rax");
         }
     }
 }
@@ -148,47 +160,28 @@ void generate(dynlist_stmt *prog)
             }
         }
         else if(n->type == StmtType_var){
-            if(n->expr->type == ExprType_Add){
-                // Creating a new variable
+            // Creating a new variable
                 
-                // saving the variable in our stack struct
-                stack_var var = {.stack_loc = stack_size};
-                for(size_t i = 0; i < stack_vars.size; i++){
-                    if(strcmp(n->expr->term->ident.val, stack_vars.data[i].ident) == 0){
-                        fprintf(stderr, "ERROR Redefinition of variable: %s\n", n->expr->term->ident.val);
-                        exit(EXIT_FAILURE);
-                    }
+            // saving the variable in our stack struct
+            stack_var var = {.stack_loc = stack_size};
+            for(size_t i = 0; i < stack_vars.size; i++){
+                if(strcmp(n->expr->term->ident.val, stack_vars.data[i].ident) == 0){
+                    fprintf(stderr, "ERROR Redefinition of variable: %s\n", n->expr->term->ident.val);
+                    exit(EXIT_FAILURE);
                 }
-
-                generate_expr(fptr, n);
-                
-                fprintf(fptr, "    add rax, rdi\n");
-                push(fptr, "rax");
-
-                // this is done down here because it wasn't working when it was above
-                var.ident = n->expr->term->ident.val;
-                dynlist_push(stack_vars, var);
-            
             }
-            else{
-                // saving the variable in our stack struct
-                stack_var var = {.stack_loc = stack_size};
+            var.ident = n->expr->term->ident.val;
+            dynlist_push(stack_vars, var);
+
+            fprintf(fptr, "    ; %s\n", n->expr->term->ident.val);
+
+            generate_expr(fptr, n->expr);
+
+            // this is done down here because it wasn't working when it was above
                 
-                for(size_t i = 0; i < stack_vars.size; i++){
-                    if(strcmp(n->expr->term->ident.val, stack_vars.data[i].ident) == 0){
-                        fprintf(stderr, "ERROR Redefinition of variable: %s\n", n->expr->term->ident.val);
-                        exit(EXIT_FAILURE);
-                    }
-                }  
 
-                fprintf(fptr, "    ; %s\n", n->expr->term->ident.val);
-                fprintf(fptr, "    mov rax, %s\n", n->expr->term->int_lit.val);
-                push(fptr, "rax");
-
-                // this is done down here because it wasn't working when it was above
-                var.ident = n->expr->term->ident.val;
-                dynlist_push(stack_vars, var);
-            }
+                
+                
         }
     }
 

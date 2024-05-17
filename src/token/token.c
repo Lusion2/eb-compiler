@@ -13,7 +13,7 @@ void tokenize(dynlist_token *tokens, dynlist_char *code){
 
     // Initializing the char
     char c;
-    for(int i = 0; i < (int)code->size; i++){
+    for(size_t i = 0; i < code->size; i++){
         dynlist_free(buffer);
         dynlist_init(buffer, char);
         // Set c equal to the current character
@@ -28,7 +28,7 @@ void tokenize(dynlist_token *tokens, dynlist_char *code){
             dynlist_push(buffer, c);
 
             // Continue checking if the char is alpha-numeric and saving it to the buffer
-            if(!(i++ < (int)code->size)){
+            if(!(i++ < code->size)){
                 fprintf(stderr, "Expected token\n");
                 dynlist_free(buffer);
                 dynlist_free_ptr(code);
@@ -66,7 +66,7 @@ void tokenize(dynlist_token *tokens, dynlist_char *code){
             // Put current char into buffer
             dynlist_push(buffer, c);
 
-            if(!(i++ < (int)code->size)){
+            if(!(i++ < code->size)){
                 fprintf(stderr, "Expected token\n");
                 dynlist_free(buffer);
                 dynlist_free_ptr(code);
