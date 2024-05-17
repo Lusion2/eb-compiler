@@ -30,14 +30,20 @@ void pop(FILE *fptr, const char *reg){
     stack_size--;
 }
 
-void getVar(FILE *fptr, const char *reg, const char *ident){
-    // TODO : VARS IN ASM
+void get_var(FILE *fptr, const char *reg, const char *ident){
     size_t offset = 0;
+    bool initialized_var = false;
     for(size_t i = 0; i < stack_vars.size; i++){
         if(strcmp(stack_vars.data[i].ident, ident) == 0){
-            offset = (stack_size - stack_vars.data[i].stack_loc) * 4;
+            offset = (stack_size - stack_vars.data[i].stack_loc - 1) * 8;
+            initialized_var = true;
             break;
         }
+    }
+    if(!initialized_var){
+        fprintf(stderr, "ERROR: Variable, %s, is not initialized\n", ident);
+        system("rm build/out.S");
+        exit(EXIT_FAILURE);
     }
     printf("offset: %li\n", offset);
 
@@ -52,20 +58,18 @@ void getVar(FILE *fptr, const char *reg, const char *ident){
 
     push(fptr, offset_str);
     pop(fptr, reg);
-    fprintf(fptr, "    sub rsp, %li\n", offset);
-
 
     free(offset_i);
 }
 
-void exprAdd(FILE *fptr, node_stmt *n){
+void expr_add(FILE *fptr, node_stmt *n){
     if(n->expr->binary.left->term->type == TermType_int_lit){
         fprintf(fptr, "    mov rax, %s\n", n->expr->binary.left->term->int_lit.val);
     }
     else if(n->expr->binary.left->term->type == TermType_ident){
         for(size_t i = 0; i < stack_vars.size; i++){
             if(strcmp(n->expr->binary.left->term->ident.val, stack_vars.data[i].ident) == 0){
-                getVar(fptr, "rax", stack_vars.data[i].ident);
+                get_var(fptr, "rax", stack_vars.data[i].ident);
                 break;
             }
         }
@@ -77,13 +81,34 @@ void exprAdd(FILE *fptr, node_stmt *n){
     else if(n->expr->binary.right->term->type == TermType_ident){
         for(size_t i = 0; i < stack_vars.size; i++){
             if(strcmp(n->expr->binary.right->term->ident.val, stack_vars.data[i].ident) == 0){
-                getVar(fptr, "rdi", stack_vars.data[i].ident);
+                get_var(fptr, "rdi", stack_vars.data[i].ident);
                 break;
             }
         }
     }
     fprintf(fptr, "    add rax, rdi\n");
     push(fptr, "rax");
+}
+
+void generate_expr(FILE *fptr, node_stmt *n){
+    if (n->expr->type == ExprType_Add){
+        // asm for this
+        fprintf(fptr, "    ; %s\n", n->expr->term->ident.val);
+        if (n->expr->binary.left->type == ExprType_Term){
+            if(n->expr->binary.left->term->type == TermType_ident){
+                get_var(fptr, "rax", n->expr->binary.left->term->ident.val);
+            } else{
+                fprintf(fptr, "    mov rax, %s\n", n->expr->binary.left->term->int_lit.val);
+            }
+        }
+        if (n->expr->binary.right->type == ExprType_Term){
+            if(n->expr->binary.right->term->type == TermType_ident){
+                get_var(fptr, "rdi", n->expr->binary.right->term->ident.val);
+            } else{
+                fprintf(fptr, "    mov rdi, %s\n", n->expr->binary.right->term->int_lit.val);
+            }
+        }
+    }
 }
 
 void generate(dynlist_stmt *prog)
@@ -105,7 +130,7 @@ void generate(dynlist_stmt *prog)
         node_stmt *n = prog->data[i];
         if(n->type == StmtType_exit){
             if(n->expr->type == ExprType_Add){
-                exprAdd(fptr, n);
+                expr_add(fptr, n);
                 fprintf(fptr, "    mov rax, 60\n");
                 pop(fptr, "rdi");
                 fprintf(fptr, "    syscall\n");
@@ -117,7 +142,7 @@ void generate(dynlist_stmt *prog)
                 }
                 else if(n->expr->term->type == TermType_ident){
                     fprintf(fptr, "    mov rax, 60\n");
-                    getVar(fptr, "rdi", n->expr->term->ident.val);
+                    get_var(fptr, "rdi", n->expr->term->ident.val);
                     fprintf(fptr, "    syscall\n");
                 }
             }
@@ -135,10 +160,8 @@ void generate(dynlist_stmt *prog)
                     }
                 }
 
-                // asm for this
-                fprintf(fptr, "    ; %s\n", n->expr->term->ident.val);
-                fprintf(fptr, "    mov rax, %s\n", n->expr->binary.left->term->int_lit.val);
-                fprintf(fptr, "    mov rdi, %s\n", n->expr->binary.right->term->int_lit.val);
+                generate_expr(fptr, n);
+                
                 fprintf(fptr, "    add rax, rdi\n");
                 push(fptr, "rax");
 
