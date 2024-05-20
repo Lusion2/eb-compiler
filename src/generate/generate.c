@@ -36,6 +36,9 @@ void get_var(FILE *fptr, const char *reg, const char *ident){
     for(size_t i = 0; i < stack_vars.size; i++){
         if(strcmp(stack_vars.data[i].ident, ident) == 0){
             offset = (stack_size - stack_vars.data[i].stack_loc - 1) * 8;
+            if((int)offset < 0){
+                offset = 0;
+            }
             initialized_var = true;
             break;
         }
@@ -115,6 +118,7 @@ void generate_expr(FILE *fptr, node_expr *expr){
         printf("%s\n", expr->term->ident.val);
         if(expr->term->type == TermType_ident){
             get_var(fptr, "rax", expr->term->ident.val);
+            push(fptr, "rax");
         }
         else if(expr->term->type == TermType_int_lit){
             fprintf(fptr, "    mov rax, %s\n", expr->term->int_lit.val);
@@ -127,9 +131,6 @@ void generate(dynlist_stmt *prog)
 {
     // init the stack_var dynlist
     dynlist_init(stack_vars, stack_var);
-    for(size_t i = 0; i < stack_vars.size; i++){
-        stack_vars.data[i].ident = (char*)malloc(sizeof(char));
-    }
 
     // Generate and open the file
     FILE *fptr;
@@ -174,8 +175,8 @@ void generate(dynlist_stmt *prog)
             dynlist_push(stack_vars, var);
 
             fprintf(fptr, "    ; %s\n", n->expr->term->ident.val);
-
             generate_expr(fptr, n->expr);
+
 
             // this is done down here because it wasn't working when it was above
                 

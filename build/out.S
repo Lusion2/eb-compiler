@@ -6,10 +6,19 @@ _start:
     add rax, rdi
     push rax
     ; y
-    push QWORD [rsp + -8]
+    mov rax, 2
+    mov rdi, 2
+    add rax, rdi
+    push rax
+    ; z
+    push QWORD [rsp + 8]
     pop rax
+    push QWORD [rsp + 0]
+    pop rdi
+    add rax, rdi
+    push rax
     mov rax, 60
-    push QWORD [rsp + -8]
+    push QWORD [rsp + 0]
     pop rdi
     syscall
     mov rax, 60
