@@ -57,7 +57,6 @@ int main(int argc, char **argv)
             tokens.data[i].type == TokenType_ident)
         {
             free(tokens.data[i].val);
-            // free(tokens.data[i].ident);
         }
     }
     dynlist_free(tokens);
@@ -69,8 +68,8 @@ int main(int argc, char **argv)
     HEAP_FREE(heap);
 
     // Build the assembly file
-    system("nasm -felf64 ./build/out.S");
-    system("ld -o ./out ./build/out.o");
+    // system("nasm -felf64 ./build/out.S");
+    // system("ld -o ./out ./build/out.o");
 
     return 0;
 }

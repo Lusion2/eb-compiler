@@ -110,6 +110,15 @@ void generate_expr(FILE *fptr, node_expr *expr){
                 fprintf(fptr, "    mov rdi, %s\n", expr->binary.right->term->int_lit.val);
             }
         }
+        else{
+            push(fptr, "rax");
+            generate_expr(fptr, expr->binary.right);
+            pop(fptr, "rax");
+            fprintf(fptr, "    add rax, rdi\n");
+            get_var(fptr, "rax", )
+            push(fptr, "rax");
+            return;
+        }
 
         fprintf(fptr, "    add rax, rdi\n");
         push(fptr, "rax");

@@ -2,7 +2,7 @@ CC = gcc
 CFLAGS = -Wall -Wextra
 
 # change address to leak for mem leaks
-DEBUG_MEM_INFO = -fsanitize=leak
+DEBUG_MEM_INFO = #-fsanitize=leak
 
 GEN_DIR = generate/
 PARSE_DIR = parse/

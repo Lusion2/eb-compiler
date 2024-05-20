@@ -107,7 +107,7 @@ node_expr *parse_expr(dynlist_token *tokens, u32 *index, int min_prec){
         Token op = tokens->data[curr_index];
         curr_index++;
         *index = curr_index;
-        int next_min_prec = prec + 1;
+        int next_min_prec = prec;
         node_expr *expr_right = parse_expr(tokens, index, next_min_prec);
         if(expr_right == NULL){
             fprintf(stderr, "Unable to parse expression\n");
@@ -200,7 +200,10 @@ node_stmt *parse_stmt(dynlist_token *tokens, u32 *index){
         }
         stmt_var->expr = expr;
         curr_index = *index;
-        if(tokens->data[curr_index].type != TokenType_semi){
+        if(tokens->data[curr_index].type == TokenType_plus){
+            printf("Another plus!\n");
+        }
+        else if(tokens->data[curr_index].type != TokenType_semi){
             fprintf(stderr, "Expected ';'\n");
             exit(EXIT_FAILURE);
         }
